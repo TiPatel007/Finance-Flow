@@ -1,0 +1,23 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log
+.pnpm-debug.log
+
+# VSCode / macOS
+.vscode/
+.DS_Store
+
+# Environment / secrets
+.env
+.env.local
+
+# SQLite DB, logs
+financeflow.db
+server.log
+
+# Build / TMP
+dist/
+build/
+tmp/
+*.log

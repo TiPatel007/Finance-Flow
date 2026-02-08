@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinanceFlow Pro - Ultimate Finance Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* --- EXISTING STYLES PRESERVED --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --terminal-bg: #0a0e1a; --terminal-dark: #0d1117; --terminal-card: #161b22;
+      --terminal-border: #1f2937; --terminal-blue: #58a6ff; --terminal-cyan: #39c5cf;
+      --terminal-green: #3fb950; --terminal-yellow: #d29922; --terminal-red: #f85149;
+      --terminal-purple: #a371f7; --text-primary: #c9d1d9; --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+    }
+    body { font-family: 'JetBrains Mono', monospace; background: var(--terminal-bg); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+    .terminal-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: linear-gradient(rgba(88, 166, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(88, 166, 255, 0.02) 1px, transparent 1px); background-size: 20px 20px; }
+    .terminal-glow { position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; z-index: -1; background: radial-gradient(circle at 50% 50%, rgba(88, 166, 255, 0.05) 0%, transparent 50%); pointer-events: none; }
+    .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+    
+    /* --- NEW AUTH STYLES --- */
+    #auth-view {
+      display: flex; justify-content: center; align-items: center; min-height: 100vh;
+    }
+    .auth-container {
+      width: 100%; max-width: 450px;
+    }
+    .auth-box {
+      background: var(--terminal-card); border: 1px solid var(--terminal-border);
+      border-radius: 12px; padding: 30px; box-shadow: 0 0 30px rgba(88, 166, 255, 0.1);
+    }
+    .auth-header { text-align: center; margin-bottom: 30px; }
+    .auth-logo { font-size: 32px; font-weight: 800; color: var(--terminal-blue); margin-bottom: 10px; }
+    .auth-toggle { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-secondary); }
+    .auth-toggle span { color: var(--terminal-blue); cursor: pointer; text-decoration: underline; }
+    
+    /* Utility classes for view switching */
+    .hidden { display: none !important; }
+
+    /* --- ORIGINAL STYLES CONTINUED --- */
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; margin-bottom: 30px; background: var(--terminal-card); border: 1px solid var(--terminal-border); border-radius: 12px; box-shadow: 0 0 20px rgba(88, 166, 255, 0.1); }
+    .logo { font-size: 24px; font-weight: 800; color: var(--terminal-blue); display: flex; align-items: center; gap: 10px; }
+    .logo::before { content: '⚡'; font-size: 28px; }
+    .nav-links { display: flex; gap: 10px; }
+    .nav-link { padding: 10px 20px; background: transparent; border: 1px solid var(--terminal-border); border-radius: 8px; color: var(--text-secondary); cursor: pointer; transition: all 0.3s; font-size: 13px; font-weight: 500; }
+    .nav-link:hover { border-color: var(--terminal-blue); color: var(--terminal-blue); background: rgba(88, 166, 255, 0.05); }
+    .nav-link.active { background: var(--terminal-blue); border-color: var(--terminal-blue); color: var(--terminal-bg); }
+    .user-section { display: flex; align-items: center; gap: 12px; }
+    .xp-badge, .streak-badge { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.3s; border: 1px solid; }
+    .xp-badge { background: rgba(163, 113, 247, 0.1); border-color: var(--terminal-purple); color: var(--terminal-purple); }
+    .xp-badge:hover { background: rgba(163, 113, 247, 0.2); transform: scale(1.05); }
+    .streak-badge { background: rgba(248, 81, 73, 0.1); border-color: var(--terminal-red); color: var(--terminal-red); }
+    .logout-btn { padding: 8px 16px; background: transparent; border: 1px solid var(--terminal-border); border-radius: 8px; color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: all 0.3s; }
+    .logout-btn:hover { border-color: var(--terminal-red); color: var(--terminal-red); }
+    
+    .page { display: none; animation: fadeIn 0.4s; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: var(--terminal-card); border: 1px solid var(--terminal-border); border-radius: 12px; padding: 25px; position: relative; overflow: hidden; transition: all 0.3s; }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, var(--terminal-blue), var(--terminal-cyan)); }
+    .stat-card:hover { border-color: var(--terminal-blue); box-shadow: 0 0 20px rgba(88, 166, 255, 0.2); transform: translateY(-2px); }
+    .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 12px; }
+    .stat-value { font-size: 42px; font-weight: 800; color: var(--terminal-blue); line-height: 1; }
+    .stat-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+    .stat-subtitle.positive { color: var(--terminal-green); }
+    .stat-subtitle.negative { color: var(--terminal-red); }
+    
+    .card { background: var(--terminal-card); border: 1px solid var(--terminal-border); border-radius: 12px; padding: 25px; margin-bottom: 20px; }
+    .terminal-window { background: var(--terminal-dark); border: 1px solid var(--terminal-border); border-radius: 8px; overflow: hidden; }
+    .terminal-header { background: var(--terminal-card); padding: 12px 20px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--terminal-border); }
+    .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-dot.red { background: #ff5f56; }
+    .terminal-dot.yellow { background: #ffbd2e; }
+    .terminal-dot.green { background: #27c93f; }
+    .terminal-title { flex: 1; text-align: right; font-size: 12px; color: var(--text-muted); }
+    .terminal-body { padding: 20px; font-size: 13px; line-height: 1.8; }
+    .terminal-line { margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; }
+    .terminal-prompt { color: var(--terminal-green); }
+    .terminal-error { color: var(--terminal-red); }
+    .terminal-info { color: var(--terminal-blue); }
+    .terminal-success { color: var(--terminal-green); }
+    .terminal-warning { color: var(--terminal-yellow); }
+    
+    .form-grid { display: grid; grid-template-columns: 2fr 1fr 1.5fr auto auto; gap: 12px; margin-bottom: 20px; }
+    input, select, textarea { padding: 12px 16px; background: var(--terminal-dark); border: 1px solid var(--terminal-border); border-radius: 8px; color: var(--text-primary); font-size: 13px; font-family: 'JetBrains Mono', monospace; transition: all 0.3s; width: 100%; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--terminal-blue); background: rgba(88, 166, 255, 0.03); }
+    select option { background: var(--terminal-card); }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+    
+    .btn { padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+    .btn-primary { background: var(--terminal-blue); color: var(--terminal-bg); }
+    .btn-primary:hover { background: #79b8ff; box-shadow: 0 0 15px rgba(88, 166, 255, 0.4); }
+    .btn-secondary { background: transparent; border: 1px solid var(--terminal-border); color: var(--text-secondary); }
+    .btn-secondary:hover { border-color: var(--terminal-blue); color: var(--terminal-blue); }
+    .btn-danger { background: var(--terminal-red); color: white; }
+    .btn-icon { padding: 8px; background: transparent; border: 1px solid var(--terminal-border); color: var(--text-secondary); border-radius: 6px; cursor: pointer; transition: all 0.3s; font-size: 14px; }
+    .btn-icon:hover { border-color: var(--terminal-blue); color: var(--terminal-blue); }
+    
+    .expense-list { max-height: 500px; overflow-y: auto; }
+    .expense-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--terminal-dark); border: 1px solid var(--terminal-border); border-radius: 8px; margin-bottom: 10px; transition: all 0.3s; cursor: pointer; }
+    .expense-item:hover { border-color: var(--terminal-blue); background: rgba(88, 166, 255, 0.03); }
+    .expense-item.fraud-alert { border-color: var(--terminal-red); background: rgba(248, 81, 73, 0.05); position: relative; }
+    .expense-item.fraud-alert::before { content: '⚠️ SUSPICIOUS'; position: absolute; top: -10px; right: 10px; background: var(--terminal-red); color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+    .btn-mark-safe { background: var(--terminal-green); color: white; padding: 6px 14px; border: none; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.3s; }
+    .btn-mark-safe:hover { background: #50cd89; transform: scale(1.05); }
+    .expense-info { display: flex; align-items: center; gap: 15px; flex: 1; }
+    .category-icon { font-size: 24px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; background: rgba(88, 166, 255, 0.1); border: 1px solid var(--terminal-blue); border-radius: 8px; }
+    .expense-details h4 { font-size: 14px; margin-bottom: 4px; color: var(--text-primary); }
+    .expense-details p { font-size: 11px; color: var(--text-muted); }
+    .expense-amount { font-size: 18px; font-weight: 700; color: var(--terminal-cyan); margin-right: 15px; }
+    .expense-actions { display: flex; gap: 8px; }
+    .fraud-badge { background: rgba(248, 81, 73, 0.1); border: 1px solid var(--terminal-red); color: var(--terminal-red); padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-left: 10px; }
+    
+    .level-card { background: linear-gradient(135deg, rgba(163, 113, 247, 0.05), rgba(88, 166, 255, 0.05)); border: 2px solid var(--terminal-purple); border-radius: 12px; padding: 40px; text-align: center; margin-bottom: 30px; }
+    .level-number { font-size: 100px; font-weight: 800; color: var(--terminal-purple); line-height: 1; }
+    .level-title { font-size: 28px; margin-top: 15px; color: var(--text-primary); }
+    .xp-bar-container { background: var(--terminal-dark); border: 1px solid var(--terminal-border); border-radius: 8px; height: 25px; margin: 25px 0; overflow: hidden; }
+    .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--terminal-purple), var(--terminal-blue)); border-radius: 8px; transition: width 0.5s; }
+    .xp-text { font-size: 16px; color: var(--text-secondary); }
+    
+    .achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+    .achievement-card { background: var(--terminal-dark); border: 1px solid var(--terminal-border); border-radius: 8px; padding: 20px; text-align: center; transition: all 0.3s; position: relative; }
+    .achievement-card.unlocked { border-color: var(--terminal-green); background: rgba(63, 185, 80, 0.05); }
+    .achievement-card.unlocked::after { content: '✓'; position: absolute; top: 8px; right: 8px; background: var(--terminal-green); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+    .achievement-icon { font-size: 40px; margin-bottom: 12px; }
+    .achievement-name { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .achievement-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+    .achievement-xp { color: var(--terminal-purple); font-weight: 600; font-size: 12px; }
+    
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 1000; align-items: center; justify-content: center; }
+    .modal.active { display: flex; animation: fadeIn 0.3s; }
+    .modal-content { background: var(--terminal-card); border: 1px solid var(--terminal-border); border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; box-shadow: 0 0 30px rgba(88, 166, 255, 0.2); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--terminal-border); }
+    .modal-title { font-size: 20px; font-weight: 700; color: var(--terminal-blue); }
+    .close-modal { font-size: 28px; cursor: pointer; color: var(--text-muted); transition: all 0.3s; }
+    .close-modal:hover { color: var(--terminal-red); }
+    
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+    
+    .chart-container { height: 320px; position: relative; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-full { grid-column: 1 / -1; }
+    @media (max-width: 1024px) { .grid-2 { grid-template-columns: 1fr; } }
+    
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--terminal-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--terminal-border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--terminal-blue); }
+    
+    .notification { position: fixed; top: 90px; right: 30px; background: var(--terminal-card); border: 1px solid var(--terminal-blue); color: var(--text-primary); padding: 16px 24px; border-radius: 8px; box-shadow: 0 0 25px rgba(88, 166, 255, 0.3); transform: translateX(400px); transition: transform 0.4s; z-index: 2000; font-size: 13px; }
+    .notification.show { transform: translateX(0); }
+    .notification.success { border-color: var(--terminal-green); box-shadow: 0 0 25px rgba(63, 185, 80, 0.3); }
+    .notification.error { border-color: var(--terminal-red); box-shadow: 0 0 25px rgba(248, 81, 73, 0.3); }
+    
+    .category-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; }
+    .category-pill { padding: 6px 14px; background: var(--terminal-dark); border: 1px solid var(--terminal-border); border-radius: 6px; cursor: pointer; transition: all 0.3s; font-size: 12px; }
+    .category-pill:hover { border-color: var(--terminal-blue); color: var(--terminal-blue); }
+    .category-pill.active { background: var(--terminal-blue); border-color: var(--terminal-blue); color: var(--terminal-bg); }
+    
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 15px; }
+    .calendar-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--terminal-dark); border: 1px solid var(--terminal-border); border-radius: 6px; cursor: pointer; transition: all 0.3s; position: relative; font-size: 13px; }
+    .calendar-day:hover { border-color: var(--terminal-blue); background: rgba(88, 166, 255, 0.05); }
+    .calendar-day.has-expense { border-color: var(--terminal-blue); background: rgba(88, 166, 255, 0.1); }
+    .calendar-day.has-expense::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background: var(--terminal-blue); border-radius: 50%; }
+    .day-number { font-weight: 600; }
+    .day-amount { font-size: 9px; color: var(--terminal-cyan); margin-top: 2px; }
+    
+    .goal-item { background: var(--terminal-dark); border: 1px solid var(--terminal-border); border-radius: 8px; padding: 20px; margin-bottom: 15px; }
+    .goal-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+    .goal-amount { font-weight: 700; color: var(--terminal-cyan); }
+    .progress-bar { background: var(--terminal-dark); border: 1px solid var(--terminal-border); border-radius: 6px; height: 10px; overflow: hidden; margin-bottom: 8px; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--terminal-blue), var(--terminal-cyan)); border-radius: 6px; transition: width 0.5s; }
+    .progress-text { font-size: 11px; color: var(--text-muted); }
+    
+    .fraud-alert-section { background: rgba(248, 81, 73, 0.05); border: 2px solid var(--terminal-red); border-radius: 12px; padding: 25px; margin-bottom: 30px; }
+    .fraud-alert-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+    .fraud-icon { font-size: 48px; }
+    .fraud-alert-title { font-size: 24px; font-weight: 700; color: var(--terminal-red); }
+    .fraud-alert-desc { color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6; }
+    
+    .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(88, 166, 255, 0.3); border-radius: 50%; border-top-color: var(--terminal-blue); animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .insight-pill { display: inline-block; padding: 4px 10px; background: rgba(88, 166, 255, 0.1); border: 1px solid var(--terminal-blue); border-radius: 4px; font-size: 10px; margin-left: 8px; color: var(--terminal-blue); }
+    .insight-pill.warning { background: rgba(210, 153, 34, 0.1); border-color: var(--terminal-yellow); color: var(--terminal-yellow); }
+    .insight-pill.danger { background: rgba(248, 81, 73, 0.1); border-color: var(--terminal-red); color: var(--terminal-red); }
+  </style>
+</head>
+<body>
+  <div class="terminal-bg"></div>
+  <div class="terminal-glow"></div>
+
+  <div class="notification" id="notification"></div>
+
+  <div id="auth-view">
+    <div class="auth-container">
+      
+      <div id="login-form" class="auth-box">
+        <div class="auth-header">
+          <div class="auth-logo">⚡ FinanceFlow Pro</div>
+          <p style="color: var(--text-secondary)">Secure Terminal Access</p>
+        </div>
+        <form id="formLogin">
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="loginEmail" placeholder="user@example.com" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%">Authenticate >_</button>
+        </form>
+        <div class="auth-toggle">
+          New user? <span onclick="toggleAuth('register')">Initialize Account</span>
+        </div>
+      </div>
+
+      <div id="register-form" class="auth-box hidden">
+        <div class="auth-header">
+          <div class="auth-logo">⚡ New User</div>
+          <p style="color: var(--text-secondary)">System Initialization</p>
+        </div>
+        <form id="formRegister">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="regName" placeholder="John Doe" required>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="regEmail" placeholder="user@example.com" required>
+          </div>
+          <div class="form-group">
+            <label>Set Monthly Budget ($)</label>
+            <input type="number" id="regBudget" placeholder="3000.00" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="regPassword" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%">Create User >_</button>
+        </form>
+        <div class="auth-toggle">
+          Existing user? <span onclick="toggleAuth('login')">Return to Login</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="container hidden" id="app-view">
+    <nav>
+      <div class="logo">FinanceFlow Pro</div>
+      <div class="nav-links">
+        <button class="nav-link active" onclick="showPage('dashboard')">Dashboard</button>
+        <button class="nav-link" onclick="showPage('transactions')">Transactions</button>
+        <button class="nav-link" onclick="showPage('analytics')">Analytics</button>
+        <button class="nav-link" onclick="showPage('goals')">Goals</button>
+  <button class="nav-link" onclick="showPage('invest')">💎 Invest</button>
+  <button class="nav-link" onclick="showPage('profile')">Profile</button>
+      </div>
+      <div class="user-section">
+        <div class="xp-badge" onclick="showPage('xp')">
+          <span>⭐</span>
+          <span id="xpDisplay">0 XP</span>
+        </div>
+        <div class="streak-badge">
+          <span>🔥</span>
+          <span id="streakDisplay">0 Day Streak</span>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </nav>
+
+    <div id="dashboard" class="page active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Monthly Budget</div>
+          <div class="stat-value" id="dispMonthlyBudget">$0.00</div>
+          <div class="stat-subtitle">Allocated funds</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Spent</div>
+          <div class="stat-value" id="dispTotalSpent">$0.00</div>
+          <div class="stat-subtitle" id="dispSpentPercent">0% of budget</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Remaining</div>
+          <div class="stat-value" id="dispRemaining">$0.00</div>
+          <div class="stat-subtitle">Current Balance</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Expenses Tracked</div>
+          <div class="stat-value" id="dispTotalCount">0</div>
+          <div class="stat-subtitle">Total transactions</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <span class="terminal-dot red"></span>
+            <span class="terminal-dot yellow"></span>
+            <span class="terminal-dot green"></span>
+            <span class="terminal-title">./add_expense</span>
+          </div>
+          <div class="terminal-body">
+            <form class="form-grid" id="expenseForm" style="grid-template-columns: 1fr; gap: 15px;">
+              <div>
+                <div class="terminal-line">
+                  <span class="terminal-prompt">></span>
+                  <span>description</span>
+                </div>
+                <input type="text" id="expenseName" placeholder="Starbucks coffee" required style="width: 100%; margin-top: 5px;">
+              </div>
+              
+              <div>
+                <div class="terminal-line">
+                  <span class="terminal-prompt">></span>
+                  <span>amount</span>
+                </div>
+                <input type="number" id="expenseAmount" placeholder="5.50" step="0.01" required style="width: 100%; margin-top: 5px;">
+              </div>
+
+              <div>
+                <div class="terminal-line">
+                  <span class="terminal-prompt">></span>
+                  <span>category</span>
+                </div>
+                <select id="expenseCategory" style="width: 100%; margin-top: 5px;">
+                  <option value="auto">🤖 Auto-detect</option>
+                  <option value="Food">🍕 Food</option>
+                  <option value="Transport">🚗 Transport</option>
+                  <option value="Entertainment">🎮 Entertainment</option>
+                  <option value="Shopping">🛍️ Shopping</option>
+                  <option value="Bills">💡 Bills</option>
+                  <option value="Education">📚 Education</option>
+                  <option value="Other">📦 Other</option>
+                </select>
+              </div>
+
+              <div>
+                <div class="terminal-line">
+                  <span class="terminal-prompt">></span>
+                  <span>date</span>
+                </div>
+                <input type="date" id="expenseDate" style="width: 100%; margin-top: 5px;">
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Execute</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <span class="terminal-dot red"></span>
+            <span class="terminal-dot yellow"></span>
+            <span class="terminal-dot green"></span>
+            <span class="terminal-title">./visualize_spending</span>
+          </div>
+          <div class="terminal-body">
+            <div class="chart-container">
+              <canvas id="spendingChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="terminal-window" style="margin-top: 20px;">
+        <div class="terminal-header">
+          <span class="terminal-dot red"></span>
+          <span class="terminal-dot yellow"></span>
+          <span class="terminal-dot green"></span>
+          <span class="terminal-title">ai_insights.sh</span>
+        </div>
+        <div class="terminal-body" id="insightsContainer">
+           <div class="terminal-line">
+             <span class="loading"></span>
+             <span style="margin-left: 10px">Analyzing financial data...</span>
+           </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="transactions" class="page">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="font-size: 20px; font-weight: 700; color: var(--terminal-blue);">💳 Transaction History</h2>
+          <button class="btn btn-secondary" onclick="showCalendar()">📅 Calendar View</button>
+        </div>
+
+        <div class="category-pills">
+          <div class="category-pill active" onclick="filterCategory('all', this)">All</div>
+          <div class="category-pill" onclick="filterCategory('Food', this)">🍕 Food</div>
+          <div class="category-pill" onclick="filterCategory('Transport', this)">🚗 Transport</div>
+          <div class="category-pill" onclick="filterCategory('Entertainment', this)">🎮 Entertainment</div>
+          <div class="category-pill" onclick="filterCategory('Shopping', this)">🛍️ Shopping</div>
+          <div class="category-pill" onclick="filterCategory('Bills', this)">💡 Bills</div>
+        </div>
+
+        <div class="fraud-alert-section" id="fraudAlert" style="display: none;">
+          <div class="fraud-alert-header">
+            <div class="fraud-icon">🚨</div>
+            <div>
+              <div class="fraud-alert-title">Suspicious Activity Detected</div>
+              <div class="fraud-alert-desc">Our AI detected <strong id="fraudCount">0</strong> potentially fraudulent transactions based on unusual patterns.</div>
+            </div>
+          </div>
+          <button class="btn btn-danger" onclick="reviewFraud()">Review Suspicious Transactions</button>
+        </div>
+
+        <div class="expense-list" id="transactionList">
+          </div>
+      </div>
+
+      <div class="modal" id="calendarModal">
+        <div class="modal-content" style="max-width: 800px;">
+          <div class="modal-header">
+            <div class="modal-title">📅 Calendar View</div>
+            <span class="close-modal" onclick="closeModal('calendarModal')">×</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <button class="btn btn-secondary">← Previous</button>
+            <h3 style="font-size: 18px;">Current Month</h3>
+            <button class="btn btn-secondary">Next →</button>
+          </div>
+          <div class="calendar-grid" id="calendarGrid">
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="analytics" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="margin-bottom: 20px; color: var(--terminal-blue);">📈 Spending Trends</h3>
+          <div class="chart-container">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom: 20px; color: var(--terminal-blue);">🎯 Category Comparison</h3>
+          <div class="chart-container">
+            <canvas id="comparisonChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="goals" class="page">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+          <h2 style="font-size: 20px; font-weight: 700; color: var(--terminal-blue);">🎯 Financial Goals</h2>
+          <button class="btn btn-primary" onclick="createGoalModal()">+ New Goal</button>
+        </div>
+        <div id="goalsList"></div>
+      </div>
+    </div>
+    
+   <div id="invest" class="page">
+      <div style="max-width: 1200px; margin: 0 auto;">
+       <div class="terminal-window" style="margin-bottom: 30px;">
+        <div class="terminal-header">
+          <span class="terminal-dot red"></span>
+          <span class="terminal-dot yellow"></span>
+          <span class="terminal-dot green"></span>
+          <span class="terminal-title">./investment_module</span>
+        </div>
+        <div class="terminal-body">
+              <div id="investContainer">
+                <!-- Dynamic investment recommendations injected here -->
+                <div id="investPersonalized">
+                  <div class="terminal-line">
+                    <span class="terminal-info">💡</span>
+                    <span><strong>Loading tailored recommendations...</strong></span>
+                  </div>
+                </div>
+
+                <div style="height:12px"></div>
+
+                <div id="investTypeSection">
+                  <div class="terminal-line">
+                    <span class="terminal-info">🎯</span>
+                    <span><strong>Choose your investor type:</strong> (This will only show educational recommendations)</span>
+                  </div>
+                  <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="btn btn-secondary" onclick="selectInvestorType('beginner')">Beginner</button>
+                    <button class="btn btn-secondary" onclick="selectInvestorType('intermediate')">Intermediate</button>
+                    <button class="btn btn-secondary" onclick="selectInvestorType('expert')">Expert</button>
+                  </div>
+                  <div style="margin-top:8px">
+                    <button class="btn btn-secondary" onclick="resetInvestorType()">Reset to inferred</button>
+                  </div>
+                  <div style="margin-top:12px">
+                    <em style="color:var(--text-secondary); font-size:13px">Manage investment settings in your <a href="#" onclick="showPage('profile');return false;">Profile → Settings</a></em>
+                  </div>
+
+                  <div id="investOptionsList" style="margin-top:12px"></div>
+                  <div id="investOptionDetail" style="margin-top:10px"></div>
+                </div>
+              </div>
+        </div>
+       </div>
+      </div>
+   </div>
+
+      <div id="profile" class="page">
+        <div style="max-width:900px; margin: 0 auto;">
+          <div class="card">
+            <h2 style="font-size:20px; font-weight:700; color:var(--terminal-blue); margin-bottom:12px">Profile & Settings</h2>
+            <div id="profileInfo" style="margin-bottom:16px; color:var(--text-secondary)">Loading profile...</div>
+
+            <div style="border-top:1px dashed var(--terminal-border); padding-top:14px">
+              <div class="terminal-line"><span class="terminal-info">⚙️</span><span><strong>Investment Settings</strong> <small style="color:var(--text-secondary); margin-left:8px">(saved to your account)</small></span></div>
+              <div style="display:flex; gap:10px; align-items:center; margin-top:8px; flex-wrap:wrap">
+                <label title="Minimum percent of monthly budget recommended for investing" style="font-size:12px;color:var(--text-secondary)">Recommend % (min)</label>
+                <input id="investPctMin" type="number" min="0" max="100" style="width:80px" />
+                <label title="Maximum percent of monthly budget recommended for investing" style="font-size:12px;color:var(--text-secondary)">Recommend % (max)</label>
+                <input id="investPctMax" type="number" min="0" max="100" style="width:80px" />
+                <label title="Use this preview to see dollar estimates; doesn't change your stored monthly budget" style="font-size:12px;color:var(--text-secondary)">Monthly budget preview ($)</label>
+                <input id="investPreviewBudget" type="number" min="0" step="1" style="width:120px" />
+                <button class="btn btn-primary" id="applyInvestSettingsBtn">Save</button>
+              </div>
+              <div id="previewCalc" style="margin-top:10px; color:var(--text-secondary); font-size:13px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <div id="xp" class="page">
+      <div style="max-width: 1000px; margin: 0 auto;">
+         <div class="level-card">
+          <div class="level-number" id="xpLevel">1</div>
+          <div class="level-title">Budget Rookie</div>
+          <div class="xp-bar-container">
+            <div class="xp-bar-fill" id="xpFill" style="width: 0%;"></div>
+          </div>
+          <div class="xp-text" id="xpText">0 / 500 XP to Level 2</div>
+        </div>
+        
+        <div class="card">
+           <h2 style="font-size: 20px; font-weight: 700; color: var(--terminal-blue); margin-bottom:15px">🏆 Badges</h2>
+           <div class="achievements-grid" id="badgesGrid">
+              </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="editModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title">✏️ Edit Transaction</div>
+          <span class="close-modal" onclick="closeModal('editModal')">×</span>
+        </div>
+        <form id="editForm">
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="editName" value="">
+          </div>
+          <div class="form-group">
+            <label>Amount ($)</label>
+            <input type="number" id="editAmount" value="" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="editCategory">
+              <option value="Food">🍕 Food</option>
+              <option value="Transport">🚗 Transport</option>
+              <option value="Entertainment">🎮 Entertainment</option>
+              <option value="Shopping">🛍️ Shopping</option>
+              <option value="Bills">💡 Bills</option>
+              <option value="Education">📚 Education</option>
+              <option value="Other">📦 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="editDate" value="">
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="editNotes" rows="3" placeholder="Add notes..."></textarea>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Save Changes</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // --- API CONFIG & HELPER ---
+  // When using VS Code Live Server (or any static server) set the full backend URL so
+  // the frontend can reach the Python API on a different port. Change this to match
+  // the port your backend listens on (5000 or 5001). Using the full URL is required
+  // if the frontend is served from a different origin than the backend.
+  // Currently the backend is running on port 5001, so point the UI there:
+  const API_URL = 'http://127.0.0.1:5001/api';
+
+    async function apiCall(endpoint, method = 'GET', body = null) {
+      const token = localStorage.getItem('authToken');
+      const options = {
+        method,
+        headers: { 'Content-Type': 'application/json' }
+      };
+      if (token) options.headers['Authorization'] = `Bearer ${token}`;
+      if (body) options.body = JSON.stringify(body);
+      
+      try {
+        const response = await fetch(`${API_URL}${endpoint}`, options);
+        const data = await response.json();
+        if (response.status === 401) {
+          logout(); 
+          return null;
+        }
+        if (!response.ok) throw new Error(data.error || 'API request failed');
+        return data;
+      } catch (error) {
+        showNotification(error.message, 'error');
+        return null;
+      }
+    }
+
+  // --- GLOBAL STATE ---
+  let expenses = [];
+  let goals = [];
+  let stats = {};
+  let currentFilter = 'all';
+  let currentEditId = null;
+  let spendingChartInstance = null;
+  let trendChartInstance = null;
+  let comparisonChartInstance = null;
+  let isInitializing = false; // guard to prevent repeated initApp runs
+
+    // --- AUTHENTICATION LOGIC ---
+    function toggleAuth(view) {
+      const loginForm = document.getElementById('login-form');
+      const regForm = document.getElementById('register-form');
+      if (view === 'register') {
+        loginForm.classList.add('hidden');
+        regForm.classList.remove('hidden');
+      } else {
+        loginForm.classList.remove('hidden');
+        regForm.classList.add('hidden');
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        
+        if (response.ok) {
+            localStorage.setItem('authToken', data.token);
+            showNotification('✅ Access Granted', 'success');
+            initApp();
+        } else {
+            showNotification(data.error, 'error');
+        }
+      } catch (err) {
+        showNotification('Connection refused. Is backend running?', 'error');
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const monthlyBudget = parseFloat(document.getElementById('regBudget').value);
+
+      try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name, email, password, monthlyBudget })
+        });
+        const data = await response.json();
+        
+        if (response.status === 201) {
+            localStorage.setItem('authToken', data.token);
+            showNotification('✅ Account Created', 'success');
+            initApp();
+        } else {
+            showNotification(data.error, 'error');
+        }
+      } catch (err) {
+        showNotification('Registration failed', 'error');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('authToken');
+      document.getElementById('app-view').classList.add('hidden');
+      document.getElementById('auth-view').classList.remove('hidden');
+      showNotification('Logged out', 'success');
+    }
+
+    // --- INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set default date
+      document.getElementById('expenseDate').valueAsDate = new Date();
+      
+      // Bind Auth Forms
+      document.getElementById('formLogin').addEventListener('submit', handleLogin);
+      document.getElementById('formRegister').addEventListener('submit', handleRegister);
+
+      // Check Token
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        initApp();
+      }
+      // Load investment settings UI values
+      try { loadInvestSettings(); } catch (e) {}
+    });
+
+    async function initApp() {
+      if (isInitializing) return;
+      isInitializing = true;
+      document.getElementById('auth-view').classList.add('hidden');
+      document.getElementById('app-view').classList.remove('hidden');
+      
+      // Load Data
+      await Promise.all([
+          loadStats(),
+          loadExpenses(),
+          loadGoals(),
+          loadInsights()
+      ]);
+
+      try {
+        // Load profile & settings (if authenticated)
+        await loadProfile();
+
+        // Render personalized invest recommendations after we have stats & goals
+        renderInvestRecommendations();
+      } finally {
+        isInitializing = false;
+      }
+    }
+
+    async function loadProfile() {
+      const data = await apiCall('/profile');
+      const info = document.getElementById('profileInfo');
+      if (data && info) {
+        info.innerHTML = `Name: <strong>${data.name}</strong><br>Email: <span style="color:var(--text-secondary)">${data.email}</span><br>Monthly Budget: $${(data.monthly_budget || data.monthlyBudget || 0).toFixed ? (data.monthly_budget || data.monthlyBudget).toFixed(2) : (data.monthly_budget || data.monthlyBudget)}`;
+      } else if (info) {
+        info.textContent = 'Profile not available';
+      }
+
+      // load server-backed invest settings into the UI (if available)
+      try { await loadInvestSettings(); } catch (e) { /* ignore */ }
+    }
+
+    // --- DATA LOADING ---
+    async function loadStats() {
+      const data = await apiCall('/stats');
+      if (data) {
+        stats = data;
+        document.getElementById('dispMonthlyBudget').textContent = `$${data.monthlyBudget.toFixed(2)}`;
+        document.getElementById('dispTotalSpent').textContent = `$${data.totalSpent.toFixed(2)}`;
+        document.getElementById('dispRemaining').textContent = `$${data.remaining.toFixed(2)}`;
+        document.getElementById('dispTotalCount').textContent = data.totalExpenses;
+        
+        const percent = data.monthlyBudget > 0 ? (data.totalSpent / data.monthlyBudget * 100) : 0;
+        const sub = document.getElementById('dispSpentPercent');
+        sub.textContent = `${percent.toFixed(1)}% of budget`;
+        sub.className = percent > 100 ? 'stat-subtitle negative' : 'stat-subtitle positive';
+
+        document.getElementById('xpDisplay').textContent = `${data.xpPoints} XP`;
+        document.getElementById('streakDisplay').textContent = `${data.streakDays} Day Streak`;
+        
+        // XP Page Update
+        document.getElementById('xpLevel').textContent = Math.floor(data.xpPoints / 100) + 1;
+        document.getElementById('xpText').textContent = `${data.xpPoints} XP Total`;
+        
+        const badgeContainer = document.getElementById('badgesGrid');
+        badgeContainer.innerHTML = data.badges.map(b => `
+           <div class="achievement-card unlocked">
+              <div class="achievement-icon">🏆</div>
+              <div class="achievement-name">${b}</div>
+           </div>
+        `).join('');
+      }
+    }
+
+    async function loadExpenses() {
+      const data = await apiCall('/expenses');
+      if (data) {
+        expenses = data;
+        renderTransactions();
+        renderCharts();
+        checkFraud();
+      }
+    }
+
+    async function loadGoals() {
+      const data = await apiCall('/goals');
+      if (data) {
+        goals = data;
+        const container = document.getElementById('goalsList');
+        container.innerHTML = goals.map(g => {
+            const pct = (g.current_amount / g.target_amount) * 100;
+            return `
+            <div class="goal-item">
+              <div class="goal-header">
+                <h4>${g.name}</h4>
+                <span class="goal-amount">$${g.current_amount} / $${g.target_amount}</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${Math.min(pct, 100)}%"></div>
+              </div>
+              <p class="progress-text">${g.completed ? 'COMPLETED 🎉' : pct.toFixed(1) + '% complete'}</p>
+              <button class="btn btn-secondary" onclick="updateGoalPrompt(${g.id})" style="margin-top:10px; padding: 5px 10px; font-size: 11px;">Update</button>
+            </div>`;
+        }).join('');
+      }
+    }
+
+    async function loadInsights() {
+      const data = await apiCall('/insights');
+      const container = document.getElementById('insightsContainer');
+      if (data && data.length > 0) {
+        container.innerHTML = data.map(insight => `
+          <div class="terminal-line">
+            <span class="terminal-${insight.type === 'warning' ? 'warning' : 'success'}">${insight.type === 'warning' ? '!' : '✓'}</span>
+            <span><strong>${insight.title}:</strong> ${insight.message}</span>
+          </div>
+        `).join('');
+      } else {
+        container.innerHTML = `<div class="terminal-line"><span class="terminal-info">i</span><span>No insights available yet. Add more expenses!</span></div>`;
+      }
+    }
+
+    // --- CORE FUNCTIONS ---
+    function renderTransactions() {
+      const list = document.getElementById('transactionList');
+      const filtered = currentFilter === 'all' 
+        ? expenses 
+        : expenses.filter(e => e.category === currentFilter);
+
+      list.innerHTML = filtered.map(exp => `
+        <div class="expense-item ${exp.is_fraud ? 'fraud-alert' : ''}">
+          <div class="expense-info">
+            <div class="category-icon">${getCategoryIcon(exp.category)}</div>
+            <div class="expense-details">
+              <h4>${exp.name} ${exp.is_fraud ? '<span class="fraud-badge">⚠️ SUSPICIOUS</span>' : ''}</h4>
+              <p>${exp.category} • ${exp.date}</p>
+            </div>
+          </div>
+          <div class="expense-amount">$${exp.amount.toFixed(2)}</div>
+          <div class="expense-actions">
+            ${exp.is_fraud ? `<button class="btn-mark-safe" onclick="markSafe(${exp.id}); event.stopPropagation();">✓ Safe</button>` : ''}
+            <button class="btn-icon" onclick="deleteExpense(${exp.id})">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function getCategoryIcon(cat) {
+        const icons = {'Food':'🍕','Transport':'🚗','Entertainment':'🎮','Shopping':'🛍️','Bills':'💡','Education':'📚','Other':'📦'};
+        return icons[cat] || '📦';
+    }
+
+  function renderCharts() {
+    // --- Doughnut (Category) Chart ---
+    const doughnutCtx = document.getElementById('spendingChart').getContext('2d');
+    if (spendingChartInstance) spendingChartInstance.destroy();
+
+    const cats = {};
+    expenses.forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.amount; });
+    const catLabels = Object.keys(cats);
+    const catValues = Object.values(cats);
+
+    const defaultColors = ['#58a6ff', '#39c5cf', '#3fb950', '#d29922', '#a371f7', '#ff5f56', '#9ba3b2'];
+    const bgColors = catLabels.map((_, i) => defaultColors[i % defaultColors.length]);
+
+    spendingChartInstance = new Chart(doughnutCtx, {
+      type: 'doughnut',
+      data: {
+        labels: catLabels.length ? catLabels : ['No data'],
+        datasets: [{
+          data: catValues.length ? catValues : [1],
+          backgroundColor: catLabels.length ? bgColors : ['#44475a'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { color: '#c9d1d9', font: { family: 'JetBrains Mono' } } } }
+      }
+    });
+
+    // --- Trend (Monthly) Chart ---
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    if (trendChartInstance) trendChartInstance.destroy();
+
+    // Aggregate by month (YYYY-MM)
+    const byMonth = {};
+    expenses.forEach(e => {
+      const d = new Date(e.date);
+      if (isNaN(d)) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      byMonth[key] = (byMonth[key] || 0) + e.amount;
+    });
+
+    const monthKeys = Object.keys(byMonth).sort();
+    const monthValues = monthKeys.map(k => byMonth[k]);
+
+    trendChartInstance = new Chart(trendCtx, {
+      type: 'line',
+      data: {
+        labels: monthKeys.length ? monthKeys : ['No data'],
+        datasets: [{
+          label: 'Spent',
+          data: monthValues.length ? monthValues : [0],
+          borderColor: '#58a6ff',
+          backgroundColor: 'rgba(88,166,255,0.12)',
+          tension: 0.25,
+          fill: true,
+          pointRadius: 3
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { x: { ticks: { color: '#c9d1d9', font: { family: 'JetBrains Mono' } } }, y: { ticks: { color: '#c9d1d9' } } },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // --- Comparison (Category) Bar Chart ---
+    const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+    if (comparisonChartInstance) comparisonChartInstance.destroy();
+
+    const compLabels = catLabels.length ? catLabels : ['No data'];
+    const compValues = catValues.length ? catValues : [0];
+
+    comparisonChartInstance = new Chart(comparisonCtx, {
+      type: 'bar',
+      data: {
+        labels: compLabels,
+        datasets: [{
+          label: 'Amount',
+          data: compValues,
+          backgroundColor: compLabels.map((_, i) => defaultColors[i % defaultColors.length])
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { x: { ticks: { color: '#c9d1d9' } }, y: { ticks: { color: '#c9d1d9' } } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+    // --- ACTIONS ---
+    document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('expenseName').value;
+      const amount = parseFloat(document.getElementById('expenseAmount').value);
+      const category = document.getElementById('expenseCategory').value;
+      const date = document.getElementById('expenseDate').value;
+
+      const res = await apiCall('/expenses', 'POST', { name, amount, category, date });
+      if (res) {
+          showNotification(`✅ Added! +${res.xpGained} XP`, 'success');
+          document.getElementById('expenseForm').reset();
+          document.getElementById('expenseDate').valueAsDate = new Date();
+          initApp(); // Reload all data and return to dashboard (original behavior)
+      }
+    });
+
+    async function deleteExpense(id) {
+        if(confirm("Delete this expense?")) {
+            await apiCall(`/expenses/${id}`, 'DELETE');
+            initApp();
+            showNotification('Deleted', 'success');
+        }
+    }
+
+    async function markSafe(id) {
+        await apiCall(`/expenses/${id}/mark-safe`, 'POST');
+        initApp();
+        showNotification('Marked as safe', 'success');
+    }
+
+    async function updateGoalPrompt(id) {
+        const amount = prompt("Enter new current amount for this goal:");
+        if (amount) {
+            await apiCall(`/goals/${id}`, 'PUT', { currentAmount: parseFloat(amount) });
+            loadGoals(); // Refresh goals
+        }
+    }
+    
+    async function createGoalModal() {
+        const name = prompt("Goal Name:");
+        const amount = prompt("Target Amount:");
+        if (name && amount) {
+            await apiCall('/goals', 'POST', { name, targetAmount: parseFloat(amount), targetDate: "2024-12-31" });
+            loadGoals();
+            showNotification('Goal Created', 'success');
+        }
+    }
+
+    // --- UI UTILS ---
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      // Highlight current nav button (simple logic for now)
+      const navs = document.querySelectorAll('.nav-link');
+      if(pageId === 'dashboard') navs[0].classList.add('active');
+      if(pageId === 'transactions') navs[1].classList.add('active');
+      if(pageId === 'analytics') navs[2].classList.add('active');
+      if(pageId === 'goals') navs[3].classList.add('active');
+  if(pageId === 'invest') navs[4].classList.add('active');
+  if(pageId === 'profile') navs[5] && navs[5].classList.add('active');
+    }
+
+    function checkFraud() {
+        const count = expenses.filter(e => e.is_fraud).length;
+        const alert = document.getElementById('fraudAlert');
+        if (count > 0) {
+            alert.style.display = 'block';
+            document.getElementById('fraudCount').textContent = count;
+        } else {
+            alert.style.display = 'none';
+        }
+    }
+    
+    function reviewFraud() {
+        showPage('transactions');
+    }
+
+    function filterCategory(cat, el) {
+        currentFilter = cat;
+        document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        renderTransactions();
+    }
+    
+    function showNotification(msg, type='success') {
+        const n = document.getElementById('notification');
+        n.textContent = msg;
+        n.className = `notification ${type} show`;
+        setTimeout(() => n.classList.remove('show'), 3000);
+    }
+    
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+    }
+
+    // --- INVESTMENT RECOMMENDATIONS (DYNAMIC) ---
+    function renderInvestRecommendations() {
+      const container = document.getElementById('investContainer');
+      if (!container) return;
+
+      // Defensive defaults
+      const mb = stats.monthlyBudget || 0;
+      const totalSpent = stats.totalSpent || 0;
+      const remaining = stats.remaining != null ? stats.remaining : (mb - totalSpent);
+      const percentUsed = mb > 0 ? (totalSpent / mb) * 100 : 0;
+
+      // Check for an emergency fund goal
+      const emergencyGoal = goals.find(g => /emerg|emergency/i.test(g.name));
+      const emergencyNeeds = emergencyGoal ? (emergencyGoal.target_amount - (emergencyGoal.current_amount || 0)) : null;
+
+      const recs = [];
+
+      // If user is over budget or very tight, recommend high-yield savings / cut back
+      if (percentUsed > 90) {
+        recs.push({
+          title: 'Priority: Build or protect emergency savings',
+          desc: emergencyNeeds != null && emergencyNeeds > 0
+            ? `You have an Emergency Fund goal with $${(emergencyGoal.current_amount || 0).toFixed(2)} of $${emergencyGoal.target_amount}. Consider a high-yield savings account for this goal to keep funds safe and liquid.`
+            : 'Your spending is close to your monthly budget. Consider building an emergency fund in a high-yield savings account before investing.'
+        });
+      } else {
+        // If comfortable monthly remaining, suggest diversified investing strategies
+        if (mb > 0 && percentUsed < 80) {
+          recs.push({
+            title: 'Consider low-cost, broad-market ETFs',
+            desc: 'If you have available savings after essentials, Canadian broad-market ETFs (e.g. VCN, XIC) or low-cost global ETFs offer diversified, low-cost exposure to equities.'
+          });
+
+          recs.push({
+            title: 'Dollar-Cost Averaging (DCA)',
+            desc: 'Invest a fixed amount regularly (e.g., monthly) to reduce timing risk and automate saving.'
+          });
+        }
+
+        // If user has goals, suggest allocating toward them
+        if (goals && goals.length) {
+          const incomplete = goals.filter(g => !g.completed).slice(0,3);
+          incomplete.forEach(g => {
+            // If this is an Emergency Fund goal, add a tailored message including 15-20% guidance based on monthly budget
+            if (/emerg|emergency/i.test(g.name)) {
+              const s = getInvestSettings();
+              const pctMin = s.min || 15;
+              const pctMax = s.max || 20;
+              const budgetBase = (s.preview && s.preview > 0) ? s.preview : mb;
+              let suggestedText = '';
+              if (budgetBase > 0) {
+                const minAmt = Math.round(budgetBase * (pctMin/100));
+                const maxAmt = Math.round(budgetBase * (pctMax/100));
+                suggestedText = ` After you reach this emergency goal, consider investing approximately ${pctMin}–${pctMax}% of your monthly budget (~$${minAmt}–$${maxAmt}) into diversified, low-cost ETFs.`;
+              } else {
+                suggestedText = ` After you reach this emergency goal, consider investing about ${pctMin}–${pctMax}% of your monthly budget into diversified, low-cost ETFs.`;
+              }
+
+              recs.push({
+                title: `Allocate toward goal: ${g.name}`,
+                desc: `Target: $${g.target_amount}. Current: $${g.current_amount || 0}. Consider directing monthly savings to this goal (savings first for short-term goals).` + suggestedText
+              });
+            } else {
+              recs.push({ title: `Allocate toward goal: ${g.name}`, desc: `Target: $${g.target_amount}. Current: $${g.current_amount || 0}. Consider directing monthly savings to this goal (savings first for short-term goals).` });
+            }
+          });
+        }
+      }
+
+      // Always suggest tax-advantaged accounts when applicable
+  recs.push({ title: 'Use tax-advantaged accounts when possible', desc: 'In Canada, consider RRSPs and TFSAs which provide tax-advantaged ways to save for retirement and other goals.' });
+
+      // Rebalance advice
+      recs.push({ title: 'Rebalance periodically', desc: 'Review asset allocation once per year and rebalance to your target to manage drift.' });
+
+      // Build HTML
+      container.innerHTML = recs.map(r => `
+        <div class="terminal-line" style="margin-bottom:10px">
+          <span class="terminal-prompt">•</span>
+          <span><strong>${r.title}</strong> — ${r.desc}</span>
+        </div>
+      `).join('');
+
+      // Add disclaimer/footer
+      container.innerHTML += `
+        <div style="height:8px"></div>
+        <div class="terminal-line">
+          <span class="terminal-warning">⚠️</span>
+          <span style="color: var(--text-secondary);">This content is for educational purposes only and is not financial advice. Always research and consider consulting a licensed financial professional before making investment decisions.</span>
+        </div>
+      `;
+      
+      // --- Auto-select investor type: prefer saved choice, otherwise infer from stats/goals ---
+      try {
+        const saved = localStorage.getItem('investorType');
+        const mb = stats.monthlyBudget || 0;
+        const totalSpent = stats.totalSpent || 0;
+        const remaining = stats.remaining != null ? stats.remaining : (mb - totalSpent);
+        const percentUsed = mb > 0 ? (totalSpent / mb) * 100 : 100;
+        const xp = stats.xpPoints || 0;
+
+    // Heuristic using goals: if any incomplete goal has a target_date within 180 days, prefer conservative
+        let shortTermGoal = false;
+        try {
+          if (goals && goals.length) {
+            const now = new Date();
+            for (const g of goals) {
+              if (!g.completed && g.target_date) {
+                const td = new Date(g.target_date);
+                const diffDays = Math.ceil((td - now) / (1000 * 60 * 60 * 24));
+                if (diffDays > 0 && diffDays <= 180) {
+                  shortTermGoal = true;
+                  break;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          shortTermGoal = false;
+        }
+
+  let inferred = 'intermediate';
+        if (mb <= 0 || percentUsed > 90 || shortTermGoal) {
+          inferred = 'beginner';
+        } else if (xp >= 500 || (mb > 0 && remaining > mb * 0.5)) {
+          // experienced or large spare budget
+          inferred = 'expert';
+        } else {
+          inferred = 'intermediate';
+        }
+
+        const pick = saved || inferred;
+        setTimeout(() => selectInvestorType(pick), 50);
+      } catch (e) {
+        // ignore storage/errors
+      }
+    }
+
+    // --- INVEST SETTINGS (server-backed when logged in, fallback to local) ---
+    function getInvestSettings() {
+      // synchronous quick-read from localStorage (used by parts of the UI)
+      const min = parseFloat(localStorage.getItem('investPctMin')) || 15;
+      const max = parseFloat(localStorage.getItem('investPctMax')) || 20;
+      const preview = parseFloat(localStorage.getItem('investPreviewBudget')) || null;
+      return { min, max, preview };
+    }
+
+    // Load settings into the UI; if logged in, fetch server-side settings and merge
+    async function loadInvestSettings() {
+      const local = getInvestSettings();
+      let s = { ...local };
+
+      // If user is authenticated, try to fetch server-saved settings
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        const res = await apiCall('/invest-settings', 'GET');
+        if (res && res.investSettings) {
+          s.min = (typeof res.investSettings.min === 'number') ? res.investSettings.min : s.min;
+          s.max = (typeof res.investSettings.max === 'number') ? res.investSettings.max : s.max;
+          s.preview = (typeof res.investSettings.preview === 'number') ? res.investSettings.preview : s.preview;
+          // persist to local for offline UX
+          try { localStorage.setItem('investPctMin', s.min); localStorage.setItem('investPctMax', s.max); if (s.preview != null) localStorage.setItem('investPreviewBudget', s.preview); } catch (e) {}
+        }
+      }
+
+      const minInput = document.getElementById('investPctMin');
+      const maxInput = document.getElementById('investPctMax');
+      const previewInput = document.getElementById('investPreviewBudget');
+      const applyBtn = document.getElementById('applyInvestSettingsBtn');
+      if (minInput) minInput.value = s.min;
+      if (maxInput) maxInput.value = s.max;
+      if (previewInput && s.preview != null) previewInput.value = s.preview;
+      updatePreviewCalc();
+      if (applyBtn) applyBtn.removeEventListener('click', applyInvestSettings); // guard double-listen
+      if (applyBtn) applyBtn.addEventListener('click', applyInvestSettings);
+      if (previewInput) { previewInput.removeEventListener('input', updatePreviewCalc); previewInput.addEventListener('input', updatePreviewCalc); }
+    }
+
+    async function applyInvestSettings() {
+      const min = parseFloat(document.getElementById('investPctMin').value) || 15;
+      const max = parseFloat(document.getElementById('investPctMax').value) || 20;
+      const preview = parseFloat(document.getElementById('investPreviewBudget').value) || null;
+      // persist locally for immediate UX
+      try { localStorage.setItem('investPctMin', min); localStorage.setItem('investPctMax', max); if (preview != null) localStorage.setItem('investPreviewBudget', preview); else localStorage.removeItem('investPreviewBudget'); } catch (e) {}
+
+      // persist to server if authenticated
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        const payload = { min, max, preview };
+        const res = await apiCall('/invest-settings', 'PUT', payload);
+        if (res) {
+          showNotification('Investment settings saved to your profile', 'success');
+        } else {
+          showNotification('Saved locally but failed to sync to server', 'warning');
+        }
+      } else {
+        showNotification('Investment settings saved locally', 'success');
+      }
+
+      // re-render recommendations to pick up new pct
+      renderInvestRecommendations();
+    }
+
+    function updatePreviewCalc() {
+      const previewInput = document.getElementById('investPreviewBudget');
+      const display = document.getElementById('previewCalc');
+      const s = getInvestSettings();
+      const preview = previewInput && previewInput.value ? parseFloat(previewInput.value) : (s.preview || 0);
+      if (!display) return;
+      if (preview > 0) {
+        const minAmt = Math.round(preview * (s.min/100));
+        const maxAmt = Math.round(preview * (s.max/100));
+        display.textContent = `Preview: ${s.min}%–${s.max}% of $${preview} → approx $${minAmt}–$${maxAmt} per month`;
+      } else {
+        display.textContent = `Preview: set a monthly budget to see dollar equivalents for ${s.min}%–${s.max}%`;
+      }
+    }
+
+    // --- INVESTOR TYPE UI & HANDLERS ---
+    function selectInvestorType(type) {
+      const list = document.getElementById('investOptionsList');
+      const detail = document.getElementById('investOptionDetail');
+      if (!list || !detail) return;
+      detail.innerHTML = '';
+
+  // persist selection locally
+  try { localStorage.setItem('investorType', type); } catch (e) {}
+  // persist selection on server (if logged in)
+  apiCall('/investor-type', 'PUT', { investorType: type }).catch(() => {});
+
+      // visual active state for type buttons
+      const typeBtns = document.querySelectorAll('#investTypeSection button');
+      typeBtns.forEach(b => {
+        b.classList.remove('invest-active');
+        b.style.background = '';
+        b.style.color = '';
+      });
+      const selBtn = document.querySelector(`#investTypeSection button[onclick="selectInvestorType('${type}')"]`);
+      if (selBtn) {
+        selBtn.classList.add('invest-active');
+        selBtn.style.background = 'var(--terminal-blue)';
+        selBtn.style.color = 'var(--terminal-bg)';
+      }
+
+      if (type === 'beginner') {
+        list.innerHTML = `
+          <div class="terminal-line"><span class="terminal-prompt">•</span><span><strong>Beginner picks</strong></span></div>
+          <div style="margin-top:8px">
+            <button class="btn btn-primary" onclick="showInvestmentDetails('beginner','high_yield')">High-yield savings account</button>
+            <span class="insight-pill" style="margin-left:8px">Low Risk</span>
+          </div>
+        `;
+      } else if (type === 'intermediate') {
+        list.innerHTML = `
+            <div class="terminal-line"><span class="terminal-prompt">•</span><span><strong>Intermediate picks</strong></span></div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px">
+            <div><button class="btn btn-primary" onclick="showInvestmentDetails('intermediate','total_market')">Canadian Total Market ETF (e.g. VCN)</button> <span class="insight-pill">Moderate</span></div>
+            <div><button class="btn btn-primary" onclick="showInvestmentDetails('intermediate','s_and_p')">S&P/TSX ETF (e.g. XIC / XIU)</button> <span class="insight-pill">Moderate</span></div>
+            <div><button class="btn btn-primary" onclick="showInvestmentDetails('intermediate','aggregate_bonds')">Canadian Aggregate Bond ETF (e.g. XBB / VAB)</button> <span class="insight-pill">Low</span></div>
+          </div>
+        `;
+      } else if (type === 'expert') {
+        list.innerHTML = `
+          <div class="terminal-line"><span class="terminal-prompt">•</span><span><strong>Expert picks</strong></span></div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px">
+            <div><button class="btn btn-primary" onclick="showInvestmentDetails('expert','tech_stock')">Example: Select Stocks (e.g. AAPL)</button> <span class="insight-pill warning">High</span></div>
+            <div><button class="btn btn-primary" onclick="showInvestmentDetails('expert','dividend_stock')">Example: Dividend Stocks (e.g. JNJ)</button> <span class="insight-pill">Moderate</span></div>
+            <div><button class="btn btn-primary" onclick="showInvestmentDetails('expert','small_cap')">Example: Small-cap Growth (e.g. IWM)</button> <span class="insight-pill warning">High</span></div>
+          </div>
+        `;
+      }
+      // Scroll into view
+      list.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Reset saved investor type (server + local) and re-run inference
+    function resetInvestorType() {
+      try { localStorage.removeItem('investorType'); } catch (e) {}
+      apiCall('/investor-type', 'PUT', { investorType: null }).then(() => {
+        renderInvestRecommendations();
+      }).catch(() => {
+        renderInvestRecommendations();
+      });
+    }
+
+    function showInvestmentDetails(level, key) {
+      const detail = document.getElementById('investOptionDetail');
+      if (!detail) return;
+
+      const map = {
+        high_yield: {
+          title: 'High-interest savings account / GIC',
+          desc: 'Low risk and liquid place to park an emergency fund. In Canada look for high-interest savings accounts (HISA) or short-term GICs from major banks or online banks; ensure Canada Deposit Insurance Corporation (CDIC) coverage when applicable.',
+          learn: 'https://www.canada.ca/en/financial-consumer-agency/services/banking/high-interest-savings-accounts.html'
+        },
+        total_market: {
+          title: 'Canadian Total Market ETF (e.g. VCN)',
+          desc: 'A Canadian total-market ETF provides broad exposure to Canadian equities with low fees; good as a core holding for long-term investors.',
+          learn: 'https://www.vanguardcanada.ca'
+        },
+        s_and_p: {
+          title: 'S&P/TSX (Canadian) ETF (e.g. XIC / XIU)',
+          desc: 'Tracks the Canadian equity market (TSX). Useful if you want Canadian market exposure.',
+          learn: 'https://www.ishares.com/ca'
+        },
+        aggregate_bonds: {
+          title: 'Canadian Aggregate Bond ETF (e.g. XBB / VAB)',
+          desc: 'Provides broad exposure to Canadian investment-grade bonds and can help reduce portfolio volatility.',
+          learn: 'https://www.vanguardcanada.ca'
+        },
+        tech_stock: {
+          title: 'Example: Canadian Tech Stock (e.g. SHOP.TO)',
+          desc: 'Individual stocks carry higher risk and require research. Consider position sizing, diversification, and a long-term perspective. Shopify (SHOP.TO) is an example of a Canadian-listed tech company (educational only).',
+          learn: 'https://www.tsx.com'
+        },
+        dividend_stock: {
+          title: 'Example: Canadian Dividend Stock (e.g. RY.TO)',
+          desc: 'Canadian banks and utilities often pay dividends and are commonly used in income-oriented strategies. This is educational only.',
+          learn: 'https://www.investopedia.com/terms/d/dividend.asp'
+        },
+        small_cap: {
+          title: 'Example: Small-cap Canadian ETF (e.g. ZCN for broader, or small-cap ETFs)',
+          desc: 'Smaller companies can offer higher growth potential but with higher volatility; suitable for experienced investors.',
+          learn: 'https://www.investopedia.com/terms/s/smallcap.asp'
+        }
+      };
+
+      const item = map[key];
+      if (!item) return;
+
+      detail.innerHTML = `
+        <div class="terminal-line">
+          <span class="terminal-info">i</span>
+          <span><strong>${item.title}</strong> — ${item.desc}</span>
+        </div>
+        <div style="height:8px"></div>
+        ${item.learn ? `<div class="terminal-line"><span class="terminal-prompt">🔗</span><span><a href="${item.learn}" target="_blank" style="color:var(--terminal-blue); text-decoration:underline">Learn more</a></span></div>` : ''}
+        <div style="height:8px"></div>
+        <div class="terminal-line">
+          <span class="terminal-warning">⚠️</span>
+          <span style="color: var(--text-secondary);">Educational only — not financial advice. This suggestion does not set amounts or create orders. Always research and/or consult a licensed advisor before acting.</span>
+        </div>
+      `;
+      detail.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  </script>
+</body>
+</html>
