@@ -162,13 +162,3 @@ pm2 start server.js --name financeflow
 pm2 save
 ```
 
-## ⚡ Performance
-
-Node.js is **async by nature** = handles many requests efficiently!
-
-
----
-
-**Everything works perfectly!** 🎉
-
-**Node.js > Python for web servers** 🚀
