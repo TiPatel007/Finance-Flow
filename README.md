@@ -166,12 +166,6 @@ pm2 save
 
 Node.js is **async by nature** = handles many requests efficiently!
 
-## 📈 Next Steps
-
-- Add more AI features
-- Connect to real bank APIs
-- Mobile app version
-- Advanced analytics
 
 ---
 
